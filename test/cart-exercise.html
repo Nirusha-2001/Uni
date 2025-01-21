@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Listing</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 20px;
+      }
+      .product-container {
+        display: flex;
+        flex-direction: column;
+        flex: 3;
+        gap: 20px;
+      }
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .product-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .product-card h3 {
+        margin: 10px 0;
+      }
+      .product-card p {
+        margin: 8px 0;
+        font-size: 14px;
+        color: #555;
+      }
+      .product-card input {
+        width: 50px;
+        margin: 10px 0;
+        text-align: center;
+      }
+      .product-card button {
+        background-color: #363636;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 5px;
+        cursor: pointer;
+      }
+      .product-card button:hover {
+        background-color: #0056b3;
+      }
+      .cart-container {
+        flex: 1;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 5px;
+      }
+      .cart-container h2 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+      }
+      .cart-item:last-child {
+        border-bottom: none;
+      }
+      .cart-item .details {
+        flex: 1;
+      }
+      .cart-item .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .delete-btn {
+        color: #ff5733;
+        border: none;
+        border-radius: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+      .delete-btn:hover {
+        color: #fff;
+        background-color: #c70039;
+      }
+      .cart-total {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="product-container">
+      <h1>Product Listing</h1>
+      <div class="product-grid" id="product-container"></div>
+    </div>
+
+    <div class="cart-container">
+      <h2>Cart</h2>
+      <div id="cart-body">
+        <!-- Cart details will be dynamically added here -->
+      </div>
+      <div class="cart-total" id="cart-total">Total: $0</div>
+    </div>
+
+    <script>
+      const products = [
+        { id: 1, name: "Caffè Latte", price: 4.25 },
+        { id: 2, name: "Cappuccino", price: 4.45 },
+        { id: 3, name: "Caramel Macchiato", price: 4.95 },
+        { id: 4, name: "Mocha", price: 5.25 },
+        { id: 5, name: "Espresso", price: 3.45 },
+        { id: 6, name: "Tea", price: 3.65 }
+      ];
+
+      const productContainer = document.getElementById("product-container");
+
+      function renderProducts() {
+        products.forEach((product) => {
+          const productCard = document.createElement("div");
+          productCard.className = "product-card";
+
+          const h3 = document.createElement("h3");
+          h3.textContent = product.name;
+          productCard.appendChild(h3);
+
+          const price = document.createElement("p");
+          price.textContent = `Price: $${product.price}`;
+          productCard.appendChild(price);
+
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = "1";
+          input.value = "1";
+          input.id = `quantity-${product.id}`;
+          productCard.appendChild(input);
+
+          const button = document.createElement("button");
+          button.textContent = "Add to cart";
+          button.addEventListener("click", () => addToCart(product.id));
+          productCard.appendChild(button);
+
+          productContainer.appendChild(productCard);
+        });
+      }
+
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+      function addToCart(productId) {
+        const product = products.find((p) => p.id === productId);
+        const quantityInput = document.getElementById(`quantity-${productId}`);
+        const quantity = parseInt(quantityInput.value, 10);
+
+        const existingItem = cart.find((item) => item.id === productId);
+
+        if (existingItem) {
+          existingItem.quantity += quantity;
+        } else {
+          cart.push({ ...product, quantity });
+        }
+
+        localStorage.setItem("cart", JSON.stringify(cart));
+        renderCart();
+      }
+
+      function removeFromCart(productId) {
+        cart = cart.filter((item) => item.id !== productId);
+        localStorage.setItem("cart", JSON.stringify(cart));
+        renderCart();
+      }
+
+      function renderCart() {
+        const cartBody = document.getElementById("cart-body");
+        const cartTotal = document.getElementById("cart-total");
+        cartBody.innerHTML = "";
+
+        let total = 0;
+
+        cart.forEach((item) => {
+          const cartItem = document.createElement("div");
+          cartItem.className = "cart-item";
+
+          const details = document.createElement("div");
+          details.className = "details";
+          details.innerHTML = `${item.name} - Quantity: ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`;
+          cartItem.appendChild(details);
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "delete-btn";
+          deleteBtn.textContent = "delete";
+          deleteBtn.addEventListener("click", () => removeFromCart(item.id));
+          actions.appendChild(deleteBtn);
+
+          cartItem.appendChild(actions);
+          cartBody.appendChild(cartItem);
+
+          total += item.price * item.quantity;
+        });
+
+        cartTotal.textContent = `Total: $${total.toFixed(2)}`;
+      }
+
+      renderProducts();
+      renderCart();
+    </script>
+  </body>
+</html>
